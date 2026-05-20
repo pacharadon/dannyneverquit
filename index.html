@@ -898,7 +898,7 @@ const DrillMode = () => {
     <div className="h-full flex flex-col">
       <header className="bg-slate-900 border-b border-slate-700 px-6 py-3 flex justify-between items-center flex-shrink-0">
         <div className="flex items-center space-x-4">
-          <div className="h-8 w-8 bg-blue-600 rounded flex items-center justify-center font-bold text-white text-xs">SQL</div>
+          <div className="h-8 w-8 bg-orange-600 rounded flex items-center justify-center font-bold text-white text-xs">SQL</div>
           <div>
             <h1 className="text-base font-bold text-white">Speed Drill</h1>
             <p className="text-slate-400 text-xs">Target: 4 minutes / query</p>
@@ -937,7 +937,7 @@ const DrillMode = () => {
             <div className="space-y-3 text-xs font-mono">
               {sch.tables.map(t => (
                 <div key={t.name} className="bg-slate-900 p-3 rounded border border-slate-700">
-                  <div className="text-blue-400 font-bold mb-2">{t.name}</div>
+                  <div className="text-orange-400 font-bold mb-2">{t.name}</div>
                   {t.cols.map(c => <div key={c} className="text-slate-400">{c}</div>)}
                 </div>
               ))}
@@ -961,7 +961,7 @@ const DrillMode = () => {
               </button>
             </div>
             <button onClick={() => { if (!code.trim()) { alert('Type a query first!'); return; } setShowSolution(true); setSolutionTab('sql'); }}
-              className="bg-blue-600 hover:bg-blue-500 text-white px-6 py-2 rounded font-bold shadow-lg hover:shadow-blue-500/20">
+              className="bg-orange-600 hover:bg-orange-500 text-white px-6 py-2 rounded font-bold shadow-lg hover:shadow-orange-500/20">
               Compare Answer
             </button>
           </div>
@@ -969,12 +969,12 @@ const DrillMode = () => {
             <div className="absolute inset-0 bg-slate-900/95 backdrop-blur-sm z-20 flex items-center justify-center p-6 fade-in">
               <div className="w-full max-w-4xl max-h-full bg-slate-800 border border-slate-700 rounded-xl shadow-2xl overflow-hidden flex flex-col">
                 <div className="bg-slate-900 px-6 py-3 border-b border-slate-700 flex justify-between items-center">
-                  <h3 className="font-bold text-white flex items-center gap-2"><Sparkles size={14} className="text-blue-400"/> Model Solution</h3>
+                  <h3 className="font-bold text-white flex items-center gap-2"><Sparkles size={14} className="text-orange-400"/> Model Solution</h3>
                   <button onClick={() => setShowSolution(false)} className="text-slate-400 hover:text-white"><X size={16}/></button>
                 </div>
                 <div className="bg-slate-900 border-b border-slate-700 px-3 flex gap-1">
                   <button onClick={() => setSolutionTab('sql')}
-                    className={`px-4 py-2 text-xs font-bold flex items-center gap-1.5 ${solutionTab === 'sql' ? 'text-blue-400 border-b-2 border-blue-400' : 'text-slate-500 hover:text-slate-300'}`}>
+                    className={`px-4 py-2 text-xs font-bold flex items-center gap-1.5 ${solutionTab === 'sql' ? 'text-orange-400 border-b-2 border-orange-400' : 'text-slate-500 hover:text-slate-300'}`}>
                     <Database size={12}/> SQL Solution
                   </button>
                   <button onClick={() => setSolutionTab('python')}
@@ -986,8 +986,8 @@ const DrillMode = () => {
                   {solutionTab === 'sql' ? (
                     <div>
                       <pre className="font-mono text-sm text-green-400 mb-4 bg-black/40 p-4 rounded border border-slate-700 whitespace-pre-wrap">{q.sql}</pre>
-                      <div className="bg-blue-900/20 border-l-4 border-blue-500 p-4">
-                        <h4 className="text-blue-400 font-bold text-xs uppercase mb-1">Logic Breakdown</h4>
+                      <div className="bg-orange-900/20 border-l-4 border-orange-500 p-4">
+                        <h4 className="text-orange-400 font-bold text-xs uppercase mb-1">Logic Breakdown</h4>
                         <p className="text-slate-300 text-sm" dangerouslySetInnerHTML={{ __html: q.logic }} />
                       </div>
                     </div>
@@ -1027,7 +1027,7 @@ const VennDiagram = ({ highlight }) => {
         <text x="55" y="82" fontSize="20" fontWeight="900" fill={leftFill !== 'transparent' ? 'white' : '#94a3b8'}>A</text>
         <text x="148" y="82" fontSize="20" fontWeight="900" fill={rightFill !== 'transparent' ? 'white' : '#94a3b8'}>B</text>
       </svg>
-      <div className="mt-2 px-3 py-1 bg-blue-500/20 border border-blue-500/40 text-blue-300 rounded-md text-[9px] font-black uppercase tracking-widest">
+      <div className="mt-2 px-3 py-1 bg-orange-500/20 border border-orange-500/40 text-orange-300 rounded-md text-[9px] font-black uppercase tracking-widest">
         {highlight ? highlight.replace(/_/g, ' ') : 'cartesian'}
       </div>
     </div>
@@ -1062,7 +1062,7 @@ const FlashcardsMode = () => {
       {/* Header */}
       <header className="bg-slate-900 border-b border-slate-800 px-6 py-3 flex justify-between items-center flex-shrink-0">
         <div className="flex items-center gap-3">
-          <BookOpen size={18} className="text-blue-400" />
+          <BookOpen size={18} className="text-orange-400" />
           <div>
             <h1 className="text-base font-bold text-white">SQL Flashcards</h1>
             <p className="text-slate-400 text-xs">{flashcards.length} commands across {cats.length - 1} categories</p>
@@ -1075,7 +1075,7 @@ const FlashcardsMode = () => {
       <div className="bg-slate-900 border-b border-slate-800 px-6 py-2 flex gap-1.5 overflow-x-auto flex-shrink-0">
         {cats.map(c => (
           <button key={c} onClick={() => setCat(c)}
-            className={`px-3 py-1 rounded-full text-[11px] font-bold whitespace-nowrap transition border ${cat === c ? 'bg-blue-600 border-blue-500 text-white' : 'bg-transparent border-slate-700 text-slate-400 hover:border-slate-500'}`}>
+            className={`px-3 py-1 rounded-full text-[11px] font-bold whitespace-nowrap transition border ${cat === c ? 'bg-orange-600 border-orange-500 text-white' : 'bg-transparent border-slate-700 text-slate-400 hover:border-slate-500'}`}>
             {c}
             <span className="ml-1.5 opacity-60 text-[9px]">
               {c === 'All' ? flashcards.length : flashcards.filter(f => f.cat === c).length}
@@ -1091,9 +1091,9 @@ const FlashcardsMode = () => {
             style={{ transformStyle: 'preserve-3d', transform: flipped ? 'rotateY(180deg)' : '' }}>
             {/* FRONT */}
             <div onClick={() => setFlipped(true)}
-              className="absolute inset-0 bg-slate-900 border-2 border-slate-700 rounded-2xl shadow-2xl flex flex-col items-center justify-center p-8 cursor-pointer hover:border-blue-500 transition"
+              className="absolute inset-0 bg-slate-900 border-2 border-slate-700 rounded-2xl shadow-2xl flex flex-col items-center justify-center p-8 cursor-pointer hover:border-orange-500 transition"
               style={{ backfaceVisibility: 'hidden' }}>
-              <span className="text-[10px] font-black text-blue-400 uppercase tracking-widest mb-4 bg-blue-500/10 border border-blue-500/30 px-3 py-1 rounded-full">{card.cat}</span>
+              <span className="text-[10px] font-black text-orange-400 uppercase tracking-widest mb-4 bg-orange-500/10 border border-orange-500/30 px-3 py-1 rounded-full">{card.cat}</span>
               <h2 className="text-4xl md:text-5xl font-black text-white uppercase text-center break-words tracking-tight">{card.cmd}</h2>
               <div className="mt-8 flex items-center gap-2 text-slate-500">
                 <span className="text-[10px] uppercase font-black tracking-widest">Engine Order</span>
@@ -1103,14 +1103,14 @@ const FlashcardsMode = () => {
             </div>
 
             {/* BACK */}
-            <div className="absolute inset-0 bg-slate-900 border-2 border-blue-600 rounded-2xl shadow-2xl flex flex-col overflow-hidden"
+            <div className="absolute inset-0 bg-slate-900 border-2 border-orange-600 rounded-2xl shadow-2xl flex flex-col overflow-hidden"
               style={{ backfaceVisibility: 'hidden', transform: 'rotateY(180deg)' }}>
-              <div className="bg-blue-600/20 border-b border-blue-600/40 px-5 py-2.5 flex justify-between items-center">
-                <h3 className="font-black text-blue-300 text-sm uppercase tracking-wider">{card.cmd}</h3>
-                <span className="text-[9px] uppercase font-bold text-blue-200 bg-blue-500/20 px-2 py-0.5 rounded">Exec {card.order}</span>
+              <div className="bg-orange-600/20 border-b border-orange-600/40 px-5 py-2.5 flex justify-between items-center">
+                <h3 className="font-black text-orange-300 text-sm uppercase tracking-wider">{card.cmd}</h3>
+                <span className="text-[9px] uppercase font-bold text-orange-200 bg-orange-500/20 px-2 py-0.5 rounded">Exec {card.order}</span>
               </div>
               <div className="flex-1 overflow-y-auto p-5 space-y-4">
-                <p className="text-slate-200 text-sm leading-relaxed italic border-l-4 border-blue-500 pl-3">{card.back}</p>
+                <p className="text-slate-200 text-sm leading-relaxed italic border-l-4 border-orange-500 pl-3">{card.back}</p>
                 <div>
                   <div className="text-[9px] uppercase font-bold tracking-widest text-slate-500 mb-1.5">Syntax</div>
                   <pre className="bg-black/40 border border-slate-800 rounded-lg p-4 font-mono text-[12px] text-green-300 whitespace-pre-wrap leading-relaxed">{card.syntax}</pre>
@@ -1138,7 +1138,7 @@ const FlashcardsMode = () => {
         <button onClick={() => nav(-1)} className="flex items-center gap-1 px-4 py-2 bg-slate-800 hover:bg-slate-700 border border-slate-700 rounded text-xs font-bold text-slate-300">
           <ChevronLeft size={14} /> Prev
         </button>
-        <button onClick={shuffle} className="flex items-center gap-1 px-4 py-2 bg-blue-600 hover:bg-blue-500 rounded text-xs font-bold text-white">
+        <button onClick={shuffle} className="flex items-center gap-1 px-4 py-2 bg-orange-600 hover:bg-orange-500 rounded text-xs font-bold text-white">
           <Shuffle size={14} /> Shuffle
         </button>
         <button onClick={() => setFlipped(f => !f)} className="flex items-center gap-1 px-4 py-2 bg-slate-800 hover:bg-slate-700 border border-slate-700 rounded text-xs font-bold text-slate-300">
@@ -1309,13 +1309,13 @@ const RolesMode = () => {
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <section className="bg-slate-950 border border-blue-900 rounded-xl p-5">
-              <div className="flex items-center gap-2 mb-3"><Database size={14} className="text-blue-400" /><h2 className="font-bold text-blue-400">SQL Patterns They Live In</h2></div>
+            <section className="bg-slate-950 border border-orange-900 rounded-xl p-5">
+              <div className="flex items-center gap-2 mb-3"><Database size={14} className="text-orange-400" /><h2 className="font-bold text-orange-400">SQL Patterns They Live In</h2></div>
               <ul className="space-y-2">
                 {role.sqlPatterns.map((p, i) => (
                   <li key={i} className="flex items-start gap-2 text-xs">
-                    <ChevronRight size={12} className="text-blue-400 mt-0.5 flex-shrink-0" />
-                    <code className="font-mono text-blue-100 leading-relaxed">{p}</code>
+                    <ChevronRight size={12} className="text-orange-400 mt-0.5 flex-shrink-0" />
+                    <code className="font-mono text-orange-100 leading-relaxed">{p}</code>
                   </li>
                 ))}
               </ul>
