@@ -457,6 +457,193 @@ merged = merged[merged['category'].isin(['Electronics', 'Fashion'])]
 # Step 4: GROUP BY buyer, keep buyers with BOTH (distinct count == 2)
 diversity = merged.groupby('buyer_id')['category'].nunique()
 result = diversity[diversity == 2].reset_index()[['buyer_id']]
+print(result)` },
+
+  { id:21, track:'shopee', schema:'sales', difficulty:'Intermediate',
+    title:"21. Big Spenders",
+    desc:"Count of UNIQUE customers who placed at least one order over $1,000.",
+    sql:`SELECT COUNT(DISTINCT customer_id) AS big_spenders\nFROM orders\nWHERE value > 1000;`,
+    logic:"DISTINCT inside COUNT dedupes — same customer with 5 big orders counts once.",
+    python:`# Step 1: Imports
+import numpy as np
+import pandas as pd
+
+# Step 2: Filter to orders above the threshold
+big = df_orders[df_orders['value'] > 1000]
+
+# Step 3: Count unique customers (nunique = COUNT DISTINCT)
+result = big['customer_id'].nunique()
+print(result)` },
+
+  { id:22, track:'shopee', schema:'sales', difficulty:'Intermediate',
+    title:"22. Order Size Buckets (CASE WHEN)",
+    desc:"Bucket every order: Small (< $50), Medium ($50–$200), Large (> $200). Return bucket + count per bucket.",
+    sql:`SELECT\n  CASE\n    WHEN value < 50 THEN 'Small'\n    WHEN value <= 200 THEN 'Medium'\n    ELSE 'Large'\n  END AS bucket,\n  COUNT(*) AS n\nFROM orders\nGROUP BY bucket;`,
+    logic:"CASE WHEN is the SQL if/else. Define labels in SELECT, then GROUP BY the alias.",
+    python:`# Step 1: Imports
+import numpy as np
+import pandas as pd
+
+# Step 2: pd.cut is the pandas equivalent of CASE WHEN tiers
+bins = [-float('inf'), 50, 200, float('inf')]
+labels = ['Small', 'Medium', 'Large']
+df_orders['bucket'] = pd.cut(df_orders['value'], bins=bins, labels=labels, right=False)
+
+# Step 3: GROUP BY bucket, count rows
+result = df_orders.groupby('bucket', observed=True).size().reset_index(name='n')
+print(result)` },
+
+  { id:23, track:'shopee', schema:'sales', difficulty:'Exam Level',
+    title:"23. Active vs Returned Label",
+    desc:"For every order, label it 'Returned' if it appears in <code>returns</code>, else 'Active'.",
+    sql:`SELECT o.order_id,\n  CASE WHEN r.order_id IS NOT NULL THEN 'Returned' ELSE 'Active' END AS status\nFROM orders o\nLEFT JOIN returns r ON o.order_id = r.order_id;`,
+    logic:"LEFT JOIN keeps every order. CASE flags whether the right side matched.",
+    python:`# Step 1: Imports
+import numpy as np
+import pandas as pd
+
+# Step 2: LEFT JOIN orders → returns with indicator
+merged = df_orders.merge(df_returns, on='order_id', how='left', indicator=True)
+
+# Step 3: Use np.where as CASE WHEN
+merged['status'] = np.where(merged['_merge'] == 'both', 'Returned', 'Active')
+
+# Step 4: Output
+result = merged[['order_id', 'status']]
+print(result)` },
+
+  { id:24, track:'shopee', schema:'marketplace', difficulty:'Intermediate',
+    title:"24. All Countries Touching Our Platform (UNION)",
+    desc:"Every country code that appears EITHER as buyer destination OR seller origin. No duplicates.",
+    sql:`SELECT country_code FROM orders\nUNION\nSELECT country_code FROM sellers;`,
+    logic:"UNION stacks two result sets AND deduplicates. UNION ALL would keep duplicates.",
+    python:`# Step 1: Imports
+import numpy as np
+import pandas as pd
+
+# Step 2: Concat both Series of country codes
+combined = pd.concat([df_orders['country_code'], df_sellers['country_code']])
+
+# Step 3: Deduplicate (SQL UNION removes dupes)
+result = combined.drop_duplicates().reset_index(drop=True)
+print(result)` },
+
+  { id:25, track:'shopee', schema:'marketplace', difficulty:'Boss Level',
+    title:"25. Buyer Spend Quartiles (NTILE)",
+    desc:"Split all buyers into 4 quartiles by total spend (1 = top spenders).",
+    sql:`SELECT buyer_id,\n  SUM(total_amount) AS spend,\n  NTILE(4) OVER (ORDER BY SUM(total_amount) DESC) AS quartile\nFROM orders\nGROUP BY buyer_id;`,
+    logic:"NTILE(4) splits the sorted rows into 4 evenly-sized buckets. Top spenders → quartile 1.",
+    python:`# Step 1: Imports
+import numpy as np
+import pandas as pd
+
+# Step 2: Total spend per buyer
+spend = (df_orders.groupby('buyer_id')['total_amount']
+    .sum().reset_index(name='spend'))
+
+# Step 3: pd.qcut is the pandas equivalent of NTILE
+spend['quartile'] = pd.qcut(spend['spend'].rank(method='first', ascending=False),
+                            q=4, labels=[1, 2, 3, 4])
+
+# Step 4: Inspect
+result = spend.sort_values('quartile')
+print(result)` },
+
+  { id:26, track:'agoda', schema:'hotel', difficulty:'Intermediate',
+    title:"26. Bookings by Month (DATE_TRUNC)",
+    desc:"Total bookings per month, ordered chronologically.",
+    sql:`SELECT DATE_TRUNC('month', check_in) AS month,\n  COUNT(*) AS bookings\nFROM bookings\nGROUP BY month\nORDER BY month;`,
+    logic:"DATE_TRUNC snaps timestamps down to a unit. GROUP BY collapses each month into one row.",
+    python:`# Step 1: Imports
+import numpy as np
+import pandas as pd
+
+# Step 2: Parse check_in + extract month period
+df_bookings['check_in'] = pd.to_datetime(df_bookings['check_in'])
+df_bookings['month'] = df_bookings['check_in'].dt.to_period('M')
+
+# Step 3: GROUP BY month, count rows
+result = (df_bookings.groupby('month').size()
+    .reset_index(name='bookings')
+    .sort_values('month'))
+print(result)` },
+
+  { id:27, track:'agoda', schema:'hotel', difficulty:'Boss Level',
+    title:"27. Hotel Revenue MoM Change (LAG)",
+    desc:"For each hotel + month, show current revenue AND last month's revenue side-by-side.",
+    sql:`WITH monthly AS (\n  SELECT hotel_id,\n    DATE_TRUNC('month', check_in) AS month,\n    SUM(amount) AS rev\n  FROM bookings\n  GROUP BY hotel_id, month\n)\nSELECT hotel_id, month, rev,\n  LAG(rev) OVER (PARTITION BY hotel_id ORDER BY month) AS prev_rev\nFROM monthly;`,
+    logic:"LAG() pulls a previous-row value within a partition. Pandas equivalent: groupby().shift(1).",
+    python:`# Step 1: Imports
+import numpy as np
+import pandas as pd
+
+# Step 2: Aggregate monthly revenue per hotel
+df_bookings['check_in'] = pd.to_datetime(df_bookings['check_in'])
+df_bookings['month'] = df_bookings['check_in'].dt.to_period('M')
+monthly = (df_bookings.groupby(['hotel_id', 'month'])['amount']
+    .sum().reset_index(name='rev'))
+
+# Step 3: Sort + groupby().shift(1) = LAG over partition
+monthly = monthly.sort_values(['hotel_id', 'month'])
+monthly['prev_rev'] = monthly.groupby('hotel_id')['rev'].shift(1)
+
+# Step 4: Output
+result = monthly[['hotel_id', 'month', 'rev', 'prev_rev']]
+print(result)` },
+
+  { id:28, track:'agoda', schema:'hotel', difficulty:'Exam Level',
+    title:"28. Hotels With a Perfect-Score Review (EXISTS)",
+    desc:"List hotels that have at least one review with score = 10. Use EXISTS — not JOIN.",
+    sql:`SELECT h.hotel_id, h.name\nFROM hotels h\nWHERE EXISTS (\n  SELECT 1\n  FROM reviews r\n  JOIN bookings b ON r.booking_id = b.booking_id\n  WHERE b.hotel_id = h.hotel_id\n    AND r.score = 10\n);`,
+    logic:"EXISTS short-circuits at the first match per outer row — faster than JOIN + DISTINCT.",
+    python:`# Step 1: Imports
+import numpy as np
+import pandas as pd
+
+# Step 2: Find which hotels have at least one 10-score review
+perfect = (df_reviews[df_reviews['score'] == 10]
+    .merge(df_bookings, on='booking_id'))
+hotel_ids_with_perfect = perfect['hotel_id'].unique()
+
+# Step 3: Filter hotels by those ids (EXISTS equivalent)
+result = df_hotels[df_hotels['hotel_id'].isin(hotel_ids_with_perfect)][['hotel_id', 'name']]
+print(result)` },
+
+  { id:29, track:'agoda', schema:'hotel', difficulty:'Boss Level',
+    title:"29. Running Revenue per Hotel (SUM OVER)",
+    desc:"For every booking, show the running total of amount per hotel, ordered by check_in.",
+    sql:`SELECT hotel_id, check_in, amount,\n  SUM(amount) OVER (\n    PARTITION BY hotel_id ORDER BY check_in\n  ) AS running_total\nFROM bookings;`,
+    logic:"SUM() OVER with ORDER BY = running total. Without ORDER BY = partition sum (same on every row).",
+    python:`# Step 1: Imports
+import numpy as np
+import pandas as pd
+
+# Step 2: Parse + sort by (hotel, date)
+df_bookings['check_in'] = pd.to_datetime(df_bookings['check_in'])
+sorted_df = df_bookings.sort_values(['hotel_id', 'check_in']).copy()
+
+# Step 3: groupby().cumsum() = SUM() OVER (PARTITION BY ... ORDER BY ...)
+sorted_df['running_total'] = sorted_df.groupby('hotel_id')['amount'].cumsum()
+
+# Step 4: Output
+result = sorted_df[['hotel_id', 'check_in', 'amount', 'running_total']]
+print(result)` },
+
+  { id:30, track:'agoda', schema:'hotel', difficulty:'Exam Level',
+    title:"30. Loyal Repeat Guests",
+    desc:"Customers who stayed at the SAME hotel more than once. Show user_id, hotel_id, stays.",
+    sql:`SELECT user_id, hotel_id, COUNT(*) AS stays\nFROM bookings\nGROUP BY user_id, hotel_id\nHAVING COUNT(*) > 1\nORDER BY stays DESC;`,
+    logic:"GROUP BY on TWO keys creates one row per (user, hotel) pair. HAVING filters to repeats only.",
+    python:`# Step 1: Imports
+import numpy as np
+import pandas as pd
+
+# Step 2: GROUP BY (user, hotel) and count rows
+counts = (df_bookings.groupby(['user_id', 'hotel_id'])
+    .size().reset_index(name='stays'))
+
+# Step 3: HAVING — keep only repeats
+result = counts[counts['stays'] > 1].sort_values('stays', ascending=False)
 print(result)` }
 ];
 
@@ -717,7 +904,7 @@ const DrillMode = () => {
             <p className="text-slate-400 text-xs">Target: 4 minutes / query</p>
           </div>
           <div className="ml-6 flex items-center gap-2">
-            {[{k:'all',label:'All 20',icon:null}, {k:'shopee',...tracks.shopee}, {k:'agoda',...tracks.agoda}].map(t => (
+            {[{k:'all',label:`All ${questions.length}`,icon:null}, {k:'shopee',...tracks.shopee}, {k:'agoda',...tracks.agoda}].map(t => (
               <button key={t.k} onClick={() => setTrackFilter(t.k)}
                 className={`flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold border transition ${trackFilter === t.k ? 'bg-slate-700 border-slate-500 text-white' : 'bg-transparent border-slate-700 text-slate-400 hover:border-slate-500'}`}>
                 {t.icon}<span>{t.label || t.name}</span>
