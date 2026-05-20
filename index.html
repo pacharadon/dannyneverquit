@@ -821,6 +821,326 @@ const flashcards = [
 ];
 
 /* =========================================================
+   VISUALIZATION SNIPPETS (matplotlib) — appended after pandas
+   Key = question id. SHOPEE = orange #EE4D2D, AGODA = rose #F43F5E
+   ========================================================= */
+const vizMap = {
+  1: `
+# Step 5: Import matplotlib
+import matplotlib.pyplot as plt
+
+# Step 6: Horizontal bar — top 10 high-value orders
+top10 = result.head(10)
+fig, ax = plt.subplots(figsize=(10, 5))
+ax.barh(top10['order_id'].astype(str), top10['value'], color='#EE4D2D')
+ax.invert_yaxis()
+ax.set_xlabel('Order Value ($)')
+ax.set_title('Top 10 Orders Above $500')
+plt.tight_layout(); plt.show()`,
+
+  2: `
+# Step 5: Visualize returned-order values
+import matplotlib.pyplot as plt
+fig, ax = plt.subplots(figsize=(10, 5))
+ax.bar(result['order_id'].astype(str), result['value'], color='#EE4D2D')
+ax.set_xlabel('Order ID'); ax.set_ylabel('Value ($)')
+ax.set_title('Returned Orders by Value')
+plt.xticks(rotation=45); plt.tight_layout(); plt.show()`,
+
+  3: `
+# Step 5: Top 15 returned bar chart
+import matplotlib.pyplot as plt
+fig, ax = plt.subplots(figsize=(10, 5))
+ax.bar(range(len(result)), [1]*len(result), color='#EE4D2D')
+ax.set_xticks(range(len(result)))
+ax.set_xticklabels(result['order_id'].astype(str), rotation=45)
+ax.set_title('Last 15 Returned Orders')
+plt.tight_layout(); plt.show()`,
+
+  4: `
+# Step 5: Bar of Z-name customers
+import matplotlib.pyplot as plt
+names = result['first_name'] + ' ' + result['last_name']
+fig, ax = plt.subplots(figsize=(10, 4))
+ax.barh(names, [1]*len(names), color='#EE4D2D')
+ax.invert_yaxis()
+ax.set_title("Customers Starting With 'Z'")
+plt.tight_layout(); plt.show()`,
+
+  5: `
+# Step 5: Z-name Jan-2024 cohort
+import matplotlib.pyplot as plt
+fig, ax = plt.subplots(figsize=(8, 4))
+ax.barh(result['full_name'], [1]*len(result), color='#EE4D2D')
+ax.invert_yaxis()
+ax.set_title("Z-Name Signups in January 2024")
+plt.tight_layout(); plt.show()`,
+
+  6: `
+# Step 4: Bangkok 5-star hotels
+import matplotlib.pyplot as plt
+fig, ax = plt.subplots(figsize=(8, 4))
+ax.barh(result['name'], [5]*len(result), color='#F43F5E')
+ax.invert_yaxis()
+ax.set_xlim(0, 5)
+ax.set_xlabel('Star Rating')
+ax.set_title('5-Star Hotels in Bangkok')
+plt.tight_layout(); plt.show()`,
+
+  7: `
+# Step 5: John Doe's bookings over time
+import matplotlib.pyplot as plt
+plot_df = result.sort_values('check_in')
+fig, ax = plt.subplots(figsize=(10, 4))
+ax.plot(plot_df['check_in'], plot_df['amount'], marker='o', color='#F43F5E', linewidth=2)
+ax.set_xlabel('Check-In Date'); ax.set_ylabel('Amount ($)')
+ax.set_title("John Doe's Bookings — Spend Over Time")
+plt.xticks(rotation=45); plt.tight_layout(); plt.show()`,
+
+  8: `
+# Step 5: Top 10 hotels by revenue (horizontal bar)
+import matplotlib.pyplot as plt
+top = result.head(10)
+fig, ax = plt.subplots(figsize=(10, 6))
+ax.barh(top['hotel_id'].astype(str), top['total_revenue'], color='#F43F5E')
+ax.invert_yaxis()
+ax.set_xlabel('Total Revenue ($)')
+ax.set_title('Top 10 Hotels by Revenue')
+plt.tight_layout(); plt.show()`,
+
+  9: `
+# Step 5: Stay-length histogram with average line
+import matplotlib.pyplot as plt
+fig, ax = plt.subplots(figsize=(10, 4))
+ax.hist(df_bookings['stay_days'], bins=15, color='#F43F5E', edgecolor='white')
+ax.axvline(result, color='#0f172a', linestyle='--', linewidth=2, label=f'Avg = {result:.1f}d')
+ax.set_xlabel('Stay Length (days)'); ax.set_ylabel('Booking Count')
+ax.set_title('Stay-Length Distribution')
+ax.legend(); plt.tight_layout(); plt.show()`,
+
+  10: `
+# Step 5: High-end traveler count
+import matplotlib.pyplot as plt
+fig, ax = plt.subplots(figsize=(10, 5))
+ax.barh(result['name'], [1]*len(result), color='#F43F5E')
+ax.invert_yaxis()
+ax.set_title('Users Who Booked 5-Star Hotels')
+plt.tight_layout(); plt.show()`,
+
+  11: `
+# Step 5: Empty hotels listing
+import matplotlib.pyplot as plt
+fig, ax = plt.subplots(figsize=(8, 4))
+ax.barh(result['name'], [1]*len(result), color='#F43F5E')
+ax.invert_yaxis()
+ax.set_title('Hotels With Zero Bookings')
+plt.tight_layout(); plt.show()`,
+
+  12: `
+# Step 4: Popular hotels horizontal bar
+import matplotlib.pyplot as plt
+plot_df = result.sort_values('booking_count', ascending=True)
+fig, ax = plt.subplots(figsize=(10, 5))
+ax.barh(plot_df['hotel_id'].astype(str), plot_df['booking_count'], color='#F43F5E')
+ax.set_xlabel('Booking Count')
+ax.set_title('Hotels With > 100 Bookings')
+plt.tight_layout(); plt.show()`,
+
+  13: `
+# Step 5: Bangkok review score histogram
+import matplotlib.pyplot as plt
+fig, ax = plt.subplots(figsize=(10, 4))
+ax.hist(result['score'], bins=range(1,12), color='#F43F5E', edgecolor='white')
+ax.set_xticks(range(1,11))
+ax.set_xlabel('Review Score (1-10)'); ax.set_ylabel('Count')
+ax.set_title('Bangkok Hotel Review Score Distribution')
+plt.tight_layout(); plt.show()`,
+
+  14: `
+# Step 4: Histogram with average reference line
+import matplotlib.pyplot as plt
+fig, ax = plt.subplots(figsize=(10, 4))
+ax.hist(df_bookings['amount'], bins=20, color='#F43F5E', edgecolor='white', alpha=0.85)
+ax.axvline(avg_amount, color='#0f172a', linestyle='--', linewidth=2,
+           label=f'Avg = \${avg_amount:.0f}')
+ax.set_xlabel('Booking Amount ($)'); ax.set_ylabel('Frequency')
+ax.set_title('Above-Average Bookings')
+ax.legend(); plt.tight_layout(); plt.show()`,
+
+  15: `
+# Step 4: Star rank — top 1 per city
+import matplotlib.pyplot as plt
+top_per_city = result[result['rnk'] == 1]
+fig, ax = plt.subplots(figsize=(10, 5))
+ax.bar(top_per_city['city'], top_per_city['star_rating'], color='#F43F5E')
+ax.set_ylabel('Star Rating'); ax.set_title('#1 Hotel per City (by stars)')
+plt.xticks(rotation=45); plt.tight_layout(); plt.show()`,
+
+  16: `
+# Step 4: GMV KPI display
+import matplotlib.pyplot as plt
+fig, ax = plt.subplots(figsize=(6, 4))
+ax.text(0.5, 0.55, f'\${result:,.0f}', ha='center', va='center',
+        fontsize=42, fontweight='bold', color='#EE4D2D')
+ax.text(0.5, 0.25, 'Total GMV — Thailand', ha='center', fontsize=12, color='#475569')
+ax.axis('off'); plt.tight_layout(); plt.show()`,
+
+  17: `
+# Step 5: Cross-border vs domestic count
+import matplotlib.pyplot as plt
+counts = merged['country_code_buyer'].ne(merged['country_code_seller']).value_counts()
+counts.index = ['Cross-border' if x else 'Domestic' for x in counts.index]
+fig, ax = plt.subplots(figsize=(7, 4))
+ax.bar(counts.index, counts.values, color=['#EE4D2D', '#cbd5e1'])
+ax.set_ylabel('Order Count'); ax.set_title('Cross-Border vs Domestic Orders')
+plt.tight_layout(); plt.show()`,
+
+  18: `
+# Step 5: Top categories by quantity
+import matplotlib.pyplot as plt
+all_cats = (merged.groupby('category')['quantity'].sum()
+    .sort_values(ascending=False).head(5))
+colors = ['#EE4D2D'] + ['#cbd5e1']*(len(all_cats)-1)
+fig, ax = plt.subplots(figsize=(10, 4))
+ax.bar(all_cats.index, all_cats.values, color=colors)
+ax.set_ylabel('Total Quantity'); ax.set_title('Category Volume — Top is Winner')
+plt.tight_layout(); plt.show()`,
+
+  19: `
+# Step 5: VN high-value sellers horizontal bar
+import matplotlib.pyplot as plt
+plot_df = result.sort_values('revenue', ascending=True)
+fig, ax = plt.subplots(figsize=(10, 5))
+ax.barh(plot_df['shop_name'], plot_df['revenue'], color='#EE4D2D')
+ax.axvline(10000, color='#0f172a', linestyle='--', alpha=0.5, label='$10k threshold')
+ax.set_xlabel('Revenue ($)'); ax.set_title('Vietnam Sellers > $10k')
+ax.legend(); plt.tight_layout(); plt.show()`,
+
+  20: `
+# Step 5: Category-diverse buyers count
+import matplotlib.pyplot as plt
+fig, ax = plt.subplots(figsize=(6, 4))
+ax.text(0.5, 0.55, f'{len(result)}', ha='center', va='center',
+        fontsize=48, fontweight='bold', color='#EE4D2D')
+ax.text(0.5, 0.25, 'Buyers in BOTH Electronics + Fashion',
+        ha='center', fontsize=11, color='#475569')
+ax.axis('off'); plt.tight_layout(); plt.show()`,
+
+  21: `
+# Step 4: Big spenders KPI
+import matplotlib.pyplot as plt
+fig, ax = plt.subplots(figsize=(6, 4))
+ax.text(0.5, 0.55, f'{result:,}', ha='center', va='center',
+        fontsize=48, fontweight='bold', color='#EE4D2D')
+ax.text(0.5, 0.25, 'Unique customers with orders > $1,000',
+        ha='center', fontsize=11, color='#475569')
+ax.axis('off'); plt.tight_layout(); plt.show()`,
+
+  22: `
+# Step 4: Order-size bucket bar
+import matplotlib.pyplot as plt
+fig, ax = plt.subplots(figsize=(8, 4))
+ax.bar(result['bucket'].astype(str), result['n'],
+       color=['#fbbf24', '#EE4D2D', '#dc2626'])
+ax.set_ylabel('Order Count'); ax.set_title('Order Size Distribution')
+for i, v in enumerate(result['n']):
+    ax.text(i, v, str(v), ha='center', va='bottom', fontweight='bold')
+plt.tight_layout(); plt.show()`,
+
+  23: `
+# Step 5: Active vs Returned — pie chart
+import matplotlib.pyplot as plt
+counts = result['status'].value_counts()
+fig, ax = plt.subplots(figsize=(6, 6))
+ax.pie(counts.values, labels=counts.index, autopct='%1.1f%%',
+       colors=['#10b981', '#EE4D2D'], startangle=90,
+       wedgeprops={'edgecolor': 'white', 'linewidth': 2})
+ax.set_title('Active vs Returned Orders')
+plt.tight_layout(); plt.show()`,
+
+  24: `
+# Step 4: All countries on the platform
+import matplotlib.pyplot as plt
+fig, ax = plt.subplots(figsize=(10, 4))
+ax.bar(result, [1]*len(result), color='#EE4D2D')
+ax.set_title(f'{len(result)} Unique Countries Across Buyers + Sellers')
+ax.set_yticks([])
+plt.tight_layout(); plt.show()`,
+
+  25: `
+# Step 5: Spend distribution by quartile
+import matplotlib.pyplot as plt
+avg_by_q = spend.groupby('quartile', observed=True)['spend'].mean()
+fig, ax = plt.subplots(figsize=(8, 4))
+ax.bar(['Q1 (Top)', 'Q2', 'Q3', 'Q4 (Bottom)'], avg_by_q.values,
+       color=['#EE4D2D', '#fb923c', '#fdba74', '#fed7aa'])
+ax.set_ylabel('Avg Spend ($)')
+ax.set_title('Average Spend per Quartile')
+plt.tight_layout(); plt.show()`,
+
+  26: `
+# Step 4: Monthly bookings line chart
+import matplotlib.pyplot as plt
+plot_df = result.copy()
+plot_df['month'] = plot_df['month'].astype(str)
+fig, ax = plt.subplots(figsize=(10, 4))
+ax.plot(plot_df['month'], plot_df['bookings'], marker='o',
+        color='#F43F5E', linewidth=2)
+ax.fill_between(plot_df['month'], plot_df['bookings'],
+                color='#F43F5E', alpha=0.15)
+ax.set_xlabel('Month'); ax.set_ylabel('Bookings')
+ax.set_title('Monthly Booking Volume')
+plt.xticks(rotation=45); plt.tight_layout(); plt.show()`,
+
+  27: `
+# Step 5: MoM revenue dual-line per hotel (top 3 by total)
+import matplotlib.pyplot as plt
+top3 = monthly.groupby('hotel_id')['rev'].sum().nlargest(3).index
+fig, ax = plt.subplots(figsize=(10, 5))
+for h in top3:
+    sub = monthly[monthly['hotel_id'] == h].copy()
+    sub['month'] = sub['month'].astype(str)
+    ax.plot(sub['month'], sub['rev'], marker='o', label=f'Hotel {h}')
+ax.set_xlabel('Month'); ax.set_ylabel('Revenue ($)')
+ax.set_title('Month-over-Month Revenue — Top 3 Hotels')
+ax.legend(); plt.xticks(rotation=45); plt.tight_layout(); plt.show()`,
+
+  28: `
+# Step 4: Hotels with perfect reviews — bar
+import matplotlib.pyplot as plt
+fig, ax = plt.subplots(figsize=(10, 5))
+ax.barh(result['name'], [1]*len(result), color='#F43F5E')
+ax.invert_yaxis()
+ax.set_xticks([])
+ax.set_title('Hotels With at Least One Perfect 10/10 Review')
+plt.tight_layout(); plt.show()`,
+
+  29: `
+# Step 5: Running revenue per hotel (line per hotel)
+import matplotlib.pyplot as plt
+fig, ax = plt.subplots(figsize=(10, 5))
+for hotel_id, grp in sorted_df.groupby('hotel_id'):
+    ax.plot(grp['check_in'], grp['running_total'], marker='o',
+            label=f'Hotel {hotel_id}')
+ax.set_xlabel('Check-In Date'); ax.set_ylabel('Cumulative Revenue ($)')
+ax.set_title('Running Revenue per Hotel')
+ax.legend(loc='best', ncol=2); plt.xticks(rotation=45)
+plt.tight_layout(); plt.show()`,
+
+  30: `
+# Step 4: Most loyal repeat-guest pairs
+import matplotlib.pyplot as plt
+top = result.head(10).copy()
+top['pair'] = 'U' + top['user_id'].astype(str) + ' @ H' + top['hotel_id'].astype(str)
+fig, ax = plt.subplots(figsize=(10, 5))
+ax.barh(top['pair'], top['stays'], color='#F43F5E')
+ax.invert_yaxis()
+ax.set_xlabel('Number of Stays')
+ax.set_title('Top 10 Loyal Repeat (User, Hotel) Pairs')
+plt.tight_layout(); plt.show()`
+};
+
+/* =========================================================
    PYTHON STEP GUIDE
    ========================================================= */
 const splitSteps = (text) => {
@@ -991,7 +1311,7 @@ const DrillMode = () => {
                         <p className="text-slate-300 text-sm" dangerouslySetInnerHTML={{ __html: q.logic }} />
                       </div>
                     </div>
-                  ) : <PythonGuide pythonText={q.python} dfHint={sch.dfHint} />}
+                  ) : <PythonGuide pythonText={q.python + (vizMap[q.id] || '')} dfHint={sch.dfHint} />}
                 </div>
                 <div className="bg-slate-900 px-6 py-3 flex justify-between items-center border-t border-slate-700">
                   <span className="text-[10px] text-slate-500 uppercase tracking-wider">Same problem, two languages</span>
