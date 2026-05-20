@@ -1156,12 +1156,22 @@ const splitSteps = (text) => {
   if (cur) out.push(cur);
   return out.map(s => ({ ...s, body: s.body.join('\n').replace(/^\n+|\n+$/g, '') }));
 };
-const PythonGuide = ({ pythonText, dfHint }) => {
-  const steps = useMemo(() => splitSteps(pythonText), [pythonText]);
+const PythonGuide = ({ pythonText, vizText, dfHint }) => {
+  const pandasSteps = useMemo(() => splitSteps(pythonText), [pythonText]);
+  // Viz steps: renumber to start at #1, so matplotlib is its own coherent block
+  const vizSteps = useMemo(() => {
+    const raw = splitSteps(vizText || '');
+    return raw.map((s, i) => ({ ...s, n: String(i + 1) }));
+  }, [vizText]);
   return (
     <div className="space-y-2">
-      {steps.map((s, i) => (
-        <div key={i} className="bg-emerald-950/60 border border-emerald-800 rounded-lg overflow-hidden">
+      {/* ===== PANDAS — the primary block ===== */}
+      <div className="flex items-center gap-2 pb-1">
+        <Bot size={14} className="text-emerald-300" />
+        <span className="text-[10px] uppercase font-bold tracking-wider text-emerald-300">pandas — primary walkthrough</span>
+      </div>
+      {pandasSteps.map((s, i) => (
+        <div key={`p${i}`} className="bg-emerald-950/60 border border-emerald-800 rounded-lg overflow-hidden">
           <div className="bg-emerald-900/50 px-3 py-1.5 flex items-center gap-2 border-b border-emerald-800">
             <div className="w-5 h-5 rounded-full bg-emerald-500 text-emerald-950 text-[10px] font-black flex items-center justify-center">#{s.n}</div>
             <span className="text-[11px] font-bold text-emerald-100">{s.title || `Step ${s.n}`}</span>
@@ -1173,6 +1183,26 @@ const PythonGuide = ({ pythonText, dfHint }) => {
         <div className="pt-1 text-[10px] text-emerald-400/80">
           Assumes <code className="text-emerald-200">{dfHint}</code> are pre-loaded as DataFrames.
         </div>
+      )}
+
+      {/* ===== MATPLOTLIB — subordinate, separate block ===== */}
+      {vizSteps.length > 0 && (
+        <>
+          <div className="my-4 flex items-center gap-3">
+            <div className="flex-1 h-px bg-amber-700/40" />
+            <span className="text-[10px] uppercase font-bold tracking-widest text-amber-300">📊 then visualize · matplotlib</span>
+            <div className="flex-1 h-px bg-amber-700/40" />
+          </div>
+          {vizSteps.map((s, i) => (
+            <div key={`v${i}`} className="bg-amber-950/40 border border-amber-800/60 rounded-lg overflow-hidden">
+              <div className="bg-amber-900/30 px-3 py-1.5 flex items-center gap-2 border-b border-amber-800/50">
+                <div className="w-5 h-5 rounded-full bg-amber-500 text-amber-950 text-[10px] font-black flex items-center justify-center">#{s.n}</div>
+                <span className="text-[11px] font-bold text-amber-100">{s.title || `Step ${s.n}`}</span>
+              </div>
+              <pre className="px-4 py-3 font-mono text-[12px] leading-relaxed text-amber-100 whitespace-pre-wrap">{s.body}</pre>
+            </div>
+          ))}
+        </>
       )}
     </div>
   );
@@ -1311,7 +1341,7 @@ const DrillMode = () => {
                         <p className="text-slate-300 text-sm" dangerouslySetInnerHTML={{ __html: q.logic }} />
                       </div>
                     </div>
-                  ) : <PythonGuide pythonText={q.python + (vizMap[q.id] || '')} dfHint={sch.dfHint} />}
+                  ) : <PythonGuide pythonText={q.python} vizText={vizMap[q.id]} dfHint={sch.dfHint} />}
                 </div>
                 <div className="bg-slate-900 px-6 py-3 flex justify-between items-center border-t border-slate-700">
                   <span className="text-[10px] text-slate-500 uppercase tracking-wider">Same problem, two languages</span>
