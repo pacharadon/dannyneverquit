@@ -289,6 +289,7 @@ print(result)` },
     desc:"Hotels with zero bookings ever.",
     sql:`SELECT h.hotel_id, h.name\nFROM hotels h\nLEFT JOIN bookings b ON h.hotel_id = b.hotel_id\nWHERE b.booking_id IS NULL;`,
     logic:"Classic exclusion-join — Alooba favorite.",
+    alt:"Three ways to write an anti-join — <b>all correct</b>:<br><br><b>1. LEFT JOIN + IS NULL</b> (above)<br><b>2. NOT EXISTS</b> &nbsp;<code>WHERE NOT EXISTS (SELECT 1 FROM bookings b WHERE b.hotel_id = h.hotel_id)</code><br><b>3. NOT IN</b> &nbsp;<code>WHERE h.hotel_id NOT IN (SELECT hotel_id FROM bookings)</code><br><br><b>✅ Recommended — NOT EXISTS.</b> Clearest intent and NULL-safe. ⚠️ <code>NOT IN</code> silently returns <i>nothing</i> if the subquery contains a single NULL — a classic trap. LEFT JOIN + IS NULL is fine too but reads less directly.",
     python:`# Step 1: Imports
 import numpy as np
 import pandas as pd
@@ -342,6 +343,7 @@ print(result)` },
     desc:"Bookings where amount > average amount.",
     sql:`SELECT *\nFROM bookings\nWHERE amount > (SELECT AVG(amount) FROM bookings);`,
     logic:"You can't use AVG() in WHERE directly — subquery first.",
+    alt:"Two valid alternatives — <b>all correct</b>:<br><br><b>1. Scalar subquery</b> (above)<br><b>2. Window function</b> &nbsp;<code>SELECT * FROM (SELECT *, AVG(amount) OVER () AS avg_amt FROM bookings) t WHERE amount &gt; avg_amt</code><br><b>3. CROSS JOIN to the average</b> &nbsp;<code>FROM bookings b CROSS JOIN (SELECT AVG(amount) a FROM bookings) x WHERE b.amount &gt; x.a</code><br><br><b>✅ Recommended — the scalar subquery.</b> Shortest and reads like plain English. The window version is handy when you also want to <i>display</i> the average alongside each row.",
     python:`# Step 1: Imports
 import numpy as np
 import pandas as pd
@@ -406,6 +408,7 @@ print(result)` },
     desc:"Category with highest total quantity sold.",
     sql:`SELECT p.category, SUM(oi.quantity) AS total_qty\nFROM order_items oi\nJOIN products p ON oi.product_id = p.product_id\nGROUP BY p.category\nORDER BY total_qty DESC\nLIMIT 1;`,
     logic:"Join, sum, sort, LIMIT 1.",
+    alt:"Two approaches — <b>both correct</b>, but they differ on ties:<br><br><b>1. ORDER BY + LIMIT 1</b> (above)<br><b>2. RANK() = 1</b> &nbsp;<code>SELECT category, total_qty FROM (SELECT p.category, SUM(oi.quantity) AS total_qty, RANK() OVER (ORDER BY SUM(oi.quantity) DESC) AS rnk FROM order_items oi JOIN products p ON oi.product_id = p.product_id GROUP BY p.category) t WHERE rnk = 1</code><br><br><b>✅ Recommended — depends on intent.</b> <code>LIMIT 1</code> is simplest but <i>silently picks one winner</i> if two categories tie. If a tie should return <i>both</i>, use <code>RANK() = 1</code>. For this drill either counts as correct.",
     python:`# Step 1: Imports
 import numpy as np
 import pandas as pd
@@ -500,6 +503,7 @@ print(result)` },
     desc:"For every order, label it 'Returned' if it appears in <code>returns</code>, else 'Active'.",
     sql:`SELECT o.order_id,\n  CASE WHEN r.order_id IS NOT NULL THEN 'Returned' ELSE 'Active' END AS status\nFROM orders o\nLEFT JOIN returns r ON o.order_id = r.order_id;`,
     logic:"LEFT JOIN keeps every order. CASE flags whether the right side matched.",
+    alt:"Two valid approaches — <b>both correct</b>:<br><br><b>1. LEFT JOIN + CASE</b> (above)<br><b>2. CASE with EXISTS</b> &nbsp;<code>SELECT o.order_id, CASE WHEN EXISTS (SELECT 1 FROM returns r WHERE r.order_id = o.order_id) THEN 'Returned' ELSE 'Active' END AS status FROM orders o</code><br><br><b>✅ Recommended — the EXISTS version</b> if an order can appear in <code>returns</code> more than once. ⚠️ The LEFT JOIN duplicates an order's row once per matching return, so it's only safe when <code>returns</code> has at most one row per order. EXISTS never multiplies rows.",
     python:`# Step 1: Imports
 import numpy as np
 import pandas as pd
@@ -598,6 +602,7 @@ print(result)` },
     desc:"List hotels that have at least one review with score = 10. Use EXISTS — not JOIN.",
     sql:`SELECT h.hotel_id, h.name\nFROM hotels h\nWHERE EXISTS (\n  SELECT 1\n  FROM reviews r\n  JOIN bookings b ON r.booking_id = b.booking_id\n  WHERE b.hotel_id = h.hotel_id\n    AND r.score = 10\n);`,
     logic:"EXISTS short-circuits at the first match per outer row — faster than JOIN + DISTINCT.",
+    alt:"Three ways to write a semi-join — <b>all correct</b>:<br><br><b>1. EXISTS</b> (above)<br><b>2. IN</b> &nbsp;<code>WHERE h.hotel_id IN (SELECT b.hotel_id FROM reviews r JOIN bookings b ON r.booking_id = b.booking_id WHERE r.score = 10)</code><br><b>3. JOIN + DISTINCT</b> &nbsp;<code>SELECT DISTINCT h.hotel_id, h.name FROM hotels h JOIN bookings b ON b.hotel_id = h.hotel_id JOIN reviews r ON r.booking_id = b.booking_id WHERE r.score = 10</code><br><br><b>✅ Recommended — EXISTS.</b> Stops at the first match and needs no <code>DISTINCT</code>. <code>JOIN + DISTINCT</code> works but scans every match then dedupes; <code>IN</code> is fine here too.",
     python:`# Step 1: Imports
 import numpy as np
 import pandas as pd
