@@ -55,6 +55,7 @@ const Trophy      = mk(<><path d="M6 9H4.5a2.5 2.5 0 0 1 0-5H6"/><path d="M18 9h
 const RotateCcw   = mk(<><polyline points="1 4 1 10 7 10"/><path d="M3.51 15a9 9 0 1 0 2.13-9.36L1 10"/></>);
 const Shuffle     = mk(<><polyline points="16 3 21 3 21 8"/><line x1="4" y1="20" x2="21" y2="3"/><polyline points="21 16 21 21 16 21"/><line x1="15" y1="15" x2="21" y2="21"/><line x1="4" y1="4" x2="9" y2="9"/></>);
 const BookOpen    = mk(<><path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"/><path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"/></>);
+const Check       = mk(<polyline points="20 6 9 17 4 12"/>);
 
 /* ERROR BOUNDARY */
 class ErrorBoundary extends Component {
@@ -1219,6 +1220,8 @@ const DrillMode = () => {
   const [showSolution, setShowSolution] = useState(false);
   const [solutionTab, setSolutionTab] = useState('sql');
   const [time, setTime] = useState(240);
+  const [score, setScore] = useState(0);
+  const [solved, setSolved] = useState(() => new Set());
   const timerRef = useRef(null);
   const q = pool[idx] || pool[0];
   const sch = schemas[q.schema];
@@ -1237,6 +1240,10 @@ const DrillMode = () => {
   const fmt = (s) => `${String(Math.floor(s/60)).padStart(2,'0')}:${String(s%60).padStart(2,'0')}`;
   const next = () => { if (idx < pool.length - 1) setIdx(i => i + 1); else alert('Drill complete!'); };
   const prev = () => { if (idx > 0) setIdx(i => i - 1); };
+  const submitCorrect = () => {
+    if (!solved.has(q.id)) { setSolved(s => new Set(s).add(q.id)); setScore(sc => sc + 1); }
+    setShowSolution(false); next();
+  };
   const diffBadge = (d) => {
     if (d === 'Warm Up')      return 'bg-green-900/60 text-green-300';
     if (d === 'Intermediate') return 'bg-yellow-900/60 text-yellow-300';
@@ -1266,6 +1273,10 @@ const DrillMode = () => {
           <div className="text-right">
             <div className="text-[10px] text-slate-400 uppercase tracking-wide">Question</div>
             <div className="font-mono text-lg font-bold"><span>{idx + 1}</span> <span className="text-slate-600">/</span> <span>{pool.length}</span></div>
+          </div>
+          <div className="text-right">
+            <div className="text-[10px] text-slate-400 uppercase tracking-wide">Score</div>
+            <div className="font-mono text-lg font-bold text-green-400"><span>{score}</span> <span className="text-slate-600">/</span> <span>{questions.length}</span></div>
           </div>
           <div className="bg-slate-800 rounded-lg px-4 py-2 border border-slate-700 flex items-center space-x-2">
             <Clock size={14} className="text-slate-400" />
@@ -1344,10 +1355,17 @@ const DrillMode = () => {
                   ) : <PythonGuide pythonText={q.python} vizText={vizMap[q.id]} dfHint={sch.dfHint} />}
                 </div>
                 <div className="bg-slate-900 px-6 py-3 flex justify-between items-center border-t border-slate-700">
-                  <span className="text-[10px] text-slate-500 uppercase tracking-wider">Same problem, two languages</span>
-                  <button onClick={() => { setShowSolution(false); next(); }} className="bg-green-600 hover:bg-green-500 text-white px-5 py-1.5 rounded font-bold text-sm flex items-center gap-1">
-                    Next <ChevronRight size={14}/>
-                  </button>
+                  <span className="text-[10px] text-slate-500 uppercase tracking-wider">
+                    {solved.has(q.id) ? '✓ Already counted' : 'Mine matches — submit to score'}
+                  </span>
+                  <div className="flex items-center gap-2">
+                    <button onClick={() => { setShowSolution(false); next(); }} className="bg-slate-700 hover:bg-slate-600 text-slate-200 px-4 py-1.5 rounded font-bold text-sm flex items-center gap-1">
+                      Skip <ChevronRight size={14}/>
+                    </button>
+                    <button onClick={submitCorrect} disabled={solved.has(q.id)} className="bg-green-600 hover:bg-green-500 disabled:opacity-40 disabled:cursor-not-allowed text-white px-5 py-1.5 rounded font-bold text-sm flex items-center gap-1">
+                      <Check size={14}/> I got it right — Submit
+                    </button>
+                  </div>
                 </div>
               </div>
             </div>
@@ -1503,192 +1521,6 @@ const FlashcardsMode = () => {
 };
 
 /* =========================================================
-   ROLES MODE
-   ========================================================= */
-const rolesData = {
-  shopee: [
-    { id:'s_ops', icon:<Database size={16}/>, name:'Data Analyst — Marketplace Ops',
-      tagline:'Owns seller health, fulfillment SLA, and 3PL logistics KPIs.',
-      daily:["Pull yesterday's ship-on-time + cancellation rates by region","Flag sellers breaching SLA two days running","Investigate 3PL POD-time anomalies","Build weekly Ops health deck"],
-      kpis:[{name:'Ship-on-Time %',formula:'shipped_within_SLA / total_orders'},{name:'Cancellation Rate',formula:'cancelled_orders / total_orders'},{name:'Chat Response %',formula:'replies_within_12h / total_chats'},{name:'Avg POD Time',formula:'AVG(pod_time - pickup_time)'}],
-      sqlPatterns:['GROUP BY shop_id + DATE_TRUNC','LEFT JOIN sellers→orders for inactives','HAVING SUM > threshold','DATEDIFF for lead-time'],
-      pythonPatterns:['pandas.resample("W") for weekly SLA','z-score outlier detection','.transform("mean") for baselines','merge(indicator=True) for hunts'] },
-    { id:'s_growth', icon:<TrendingUp size={16}/>, name:'Growth / Marketing Analyst',
-      tagline:'Optimizes voucher spend and acquisition ROI.',
-      daily:["Compute ROAS / GMV-per-voucher","Track CAC by channel","Run uplift analysis for A/B tests","Reconcile voucher liability vs budget"],
-      kpis:[{name:'ROAS',formula:'GMV / Marketing Spend'},{name:'CAC',formula:'Channel Spend / New Buyers'},{name:'Voucher Redemption %',formula:'redemption_count / total_quota'},{name:'Voucher Liability',formula:'SUM(redemption_count * discount_amount)'}],
-      sqlPatterns:['SUM(CASE WHEN ...) conditional aggregation','Liability vs budget thresholds','SUM() OVER for running burn','CTE + MIN(order_date) for cohorts'],
-      pythonPatterns:['pivot_table for channel × week','groupby().cumsum() for burn','merge + .agg for blended CAC','.qcut for RFM quintiles'] },
-    { id:'s_risk', icon:<Shield size={16}/>, name:'Trust & Safety / Risk Analyst',
-      tagline:'Hunts fraud rings and voucher abusers.',
-      daily:["Score checkout events for fraud","Investigate repeat-voucher abuse","Detect review-burst patterns","Hand-off cases to Risk Ops"],
-      kpis:[{name:'Fraud Catch Rate',formula:'TP / (TP + FN)'},{name:'False Positive %',formula:'FP / Total Flagged'},{name:'Voucher Abuse Cases',formula:'COUNT(user, voucher) > 1'},{name:'Refund Rate',formula:'refunded / total_orders'}],
-      sqlPatterns:['GROUP BY + HAVING COUNT > N','Self-join for co-occurrence','Window LAG for time-delta','EXISTS / NOT EXISTS for blocklists'],
-      pythonPatterns:['.value_counts() for top abusers','rolling().count() for review bursts','scipy.stats.zscore on baselines','NetworkX for collusion rings'] }
-  ],
-  agoda: [
-    { id:'a_revgrowth', icon:<Briefcase size={16}/>, name:'Senior Manager — Strategic Revenue & Growth',
-      tagline:'P&L stewardship. Marketing investment allocation. Alooba-assessed.',
-      assessment:{platform:'Alooba',parts:[{name:'Concepts & Knowledge',q:'16 MCQ',t:'25 min',topics:'Stats, data literacy, charts, CAGR'},{name:'SQL Technical',q:'2 queries',t:'15 min',topics:'ANSI SQL, aggregations, joins'},{name:'Free Response Video',q:'1 record',t:'5 min',topics:'Strategic problem solving, STAR'}],starExample:{situation:'Q4 2025 — SEP flags 12% conversion drop in Thai mobile checkout.',task:'Recover lost revenue + prevent recurrence in 48h.',action:'Led DS + payments sprint; SQL showed e-wallet failure spike; directed real-time failover.',result:'Conversion stabilized in 24h. ~$1.5M recovered.'}},
-      daily:["Govern marketing investment vs P&L target","Refine LTV definition","Lead cross-functional growth bets","Steward RevPAR + ADR portfolio","Translate findings to board narratives"],
-      kpis:[{name:'ADR',formula:'TotalRoomRevenue / RoomsSold'},{name:'RevPAR',formula:'ADR × OccupancyRate'},{name:'GOPPAR',formula:'GOP / RoomsAvailable'},{name:'LTV:CAC',formula:'(ARPU/Churn) ÷ CAC'},{name:'CAGR',formula:'(V_final/V_begin)^(1/t) − 1'}],
-      sqlPatterns:['LEFT JOIN + IS NULL — orphan hunts','DATE_TRUNC for cohort buckets','CTE + MIN(order_date) for cohort assignment','SUM() OVER PARTITION for share-of-segment','Displacement Analysis joins'],
-      pythonPatterns:['pd.to_datetime().dt.to_period("M")','.merge(indicator=True) → left_only','.transform("sum") for partition share','pd.pivot_table for retention matrices','numpy CAGR: (final/initial) ** (1/years) - 1'] },
-    { id:'a_yield', icon:<TrendingUp size={16}/>, name:'Yield / Revenue Manager',
-      tagline:'Dynamic pricing. Demand forecasting. 7-20% RevPAR lift vs static.',
-      daily:["Adjust BAR across high-demand dates","Monitor competitor rates","Forecast occupancy 30/60/90d","Decide overbooking thresholds"],
-      kpis:[{name:'RevPAR',formula:'ADR × Occupancy'},{name:'Occupancy',formula:'RoomsSold / RoomsAvailable'},{name:'BAR Variance',formula:'BAR_ours - BAR_compset'},{name:'Pickup Pace',formula:'bookings_today / baseline'}],
-      sqlPatterns:['Time-series joins on (hotel, date)','Window for rolling-7d occupancy',"LEAD() for tomorrow's demand",'CROSS JOIN for pricing grids'],
-      pythonPatterns:['statsmodels SARIMAX','.rolling("7D").mean()','pd.MultiIndex for (hotel, date)','numpy.where for tiered BAR'] },
-    { id:'a_supply', icon:<Layers size={16}/>, name:'Supply / Partnerships Analyst',
-      tagline:'Onboards properties. Tracks 4.5M+ catalog health.',
-      daily:["Score new properties on content","Identify dead inventory (60d zero bookings)","Triage partner SLA breaches","Surface high-potential properties"],
-      kpis:[{name:'Properties Live',formula:'COUNT(active hotels)'},{name:'Content Score',formula:'pct fields × photo quality'},{name:'Dead Inventory %',formula:'hotels_zero_bookings / total'},{name:'Partner Response SLA',formula:'pct replied in 24h'}],
-      sqlPatterns:['LEFT JOIN hotels→bookings WHERE NULL','GROUP BY country/city for rollups','CASE WHEN for completeness','EXISTS for "any booking in 60d"'],
-      pythonPatterns:['.notna().sum(axis=1) for scoring','merge(indicator=True) for dead inventory','groupby([city]).agg(...)','.apply with scoring funcs'] }
-  ]
-};
-
-const RolesMode = () => {
-  const [company, setCompany] = useState('agoda');
-  const [roleIdx, setRoleIdx] = useState(0);
-  const list = rolesData[company];
-  const role = list[roleIdx];
-  const co = tracks[company];
-  const tone = tones[co.accent];
-
-  useEffect(() => { setRoleIdx(0); }, [company]);
-
-  return (
-    <div className="flex h-full bg-slate-950 overflow-hidden">
-      <aside className="w-72 bg-slate-900 border-r border-slate-800 flex flex-col flex-shrink-0">
-        <div className="p-4 border-b border-slate-800">
-          <div className="text-[10px] uppercase font-bold tracking-wider text-slate-500 mb-2">Company</div>
-          <div className="flex flex-col gap-1">
-            {Object.entries(tracks).map(([k, c]) => {
-              const t = tones[c.accent];
-              const active = k === company;
-              return (
-                <button key={k} onClick={() => setCompany(k)}
-                  className={`flex items-center gap-2 px-3 py-2 rounded text-sm font-bold transition ${active ? `${t.bg} ${t.text} border ${t.ring}` : 'text-slate-400 hover:bg-slate-800 border border-transparent'}`}>
-                  {c.icon}<span>{c.name}</span>
-                  <span className="ml-auto text-[10px] opacity-60">{rolesData[k].length} roles</span>
-                </button>
-              );
-            })}
-          </div>
-        </div>
-        <div className="flex-1 overflow-y-auto p-3">
-          <div className="text-[10px] uppercase font-bold tracking-wider text-slate-500 px-2 mb-2">{co.name} Roles</div>
-          <div className="space-y-1">
-            {list.map((r, i) => (
-              <button key={r.id} onClick={() => setRoleIdx(i)}
-                className={`w-full text-left px-3 py-2.5 rounded border text-sm transition ${roleIdx === i ? `bg-slate-800 ${tone.ring} border-2` : 'bg-transparent border-slate-800 hover:border-slate-700'}`}>
-                <div className="flex items-center gap-2 mb-1">
-                  <span className={tone.text}>{r.icon}</span>
-                  <span className="font-bold text-slate-100 leading-tight">{r.name}</span>
-                </div>
-                <div className="text-[11px] text-slate-500 leading-snug">{r.tagline}</div>
-              </button>
-            ))}
-          </div>
-        </div>
-      </aside>
-
-      <main className="flex-1 overflow-y-auto bg-slate-950">
-        <div className="max-w-5xl mx-auto p-6 space-y-5">
-          <header className={`${tone.bg} border ${tone.ring} rounded-xl p-5`}>
-            <div className="flex items-center gap-2 mb-1">
-              <span className={tone.text}>{role.icon}</span>
-              <span className={`text-[10px] uppercase font-black tracking-widest ${tone.text}`}>{co.name} • Role Deep Dive</span>
-            </div>
-            <h1 className="text-2xl font-bold text-slate-100">{role.name}</h1>
-            <p className="text-slate-400 mt-1">{role.tagline}</p>
-          </header>
-
-          {role.assessment && (
-            <section className="bg-slate-900 border-2 border-amber-700 rounded-xl p-5">
-              <div className="flex items-center gap-2 mb-3">
-                <Trophy size={16} className="text-amber-400" />
-                <h2 className="font-bold text-slate-100">Assessment — {role.assessment.platform}</h2>
-              </div>
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-3 mb-4">
-                {role.assessment.parts.map((p, i) => (
-                  <div key={i} className="bg-amber-950/40 border border-amber-800 rounded p-3">
-                    <div className="text-[10px] uppercase font-black text-amber-400 tracking-wider">{p.name}</div>
-                    <div className="mt-1 font-bold text-slate-200">{p.q} • {p.t}</div>
-                    <div className="text-xs text-slate-400 mt-1">{p.topics}</div>
-                  </div>
-                ))}
-              </div>
-              <div className="border-t border-slate-700 pt-3">
-                <div className="text-[10px] uppercase font-black tracking-wider text-slate-500 mb-2">STAR Example</div>
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-2 text-xs">
-                  <div className="bg-slate-800 p-2 rounded border border-slate-700"><span className="font-bold text-slate-300">Situation:</span> <span className="text-slate-400">{role.assessment.starExample.situation}</span></div>
-                  <div className="bg-slate-800 p-2 rounded border border-slate-700"><span className="font-bold text-slate-300">Task:</span> <span className="text-slate-400">{role.assessment.starExample.task}</span></div>
-                  <div className="bg-slate-800 p-2 rounded border border-slate-700"><span className="font-bold text-slate-300">Action:</span> <span className="text-slate-400">{role.assessment.starExample.action}</span></div>
-                  <div className="bg-emerald-950/40 p-2 rounded border border-emerald-800"><span className="font-bold text-emerald-300">Result:</span> <span className="text-slate-200">{role.assessment.starExample.result}</span></div>
-                </div>
-              </div>
-            </section>
-          )}
-
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <section className="bg-slate-900 border border-slate-800 rounded-xl p-5">
-              <div className="flex items-center gap-2 mb-3"><Clock size={14} className="text-slate-500" /><h2 className="font-bold text-slate-100">A Day in the Role</h2></div>
-              <ul className="space-y-2">
-                {role.daily.map((d, i) => (
-                  <li key={i} className="flex items-start gap-2 text-sm text-slate-300">
-                    <span className={`inline-flex w-5 h-5 rounded-full ${tone.bg} ${tone.text} text-[10px] font-black items-center justify-center flex-shrink-0 mt-0.5`}>{i+1}</span>
-                    <span>{d}</span>
-                  </li>
-                ))}
-              </ul>
-            </section>
-            <section className="bg-slate-900 border border-slate-800 rounded-xl p-5">
-              <div className="flex items-center gap-2 mb-3"><Target size={14} className="text-slate-500" /><h2 className="font-bold text-slate-100">Core KPIs</h2></div>
-              <div className="space-y-2">
-                {role.kpis.map((k, i) => (
-                  <div key={i} className="border-l-4 border-slate-700 pl-3 py-1">
-                    <div className="font-bold text-sm text-slate-200">{k.name}</div>
-                    <code className="text-[11px] text-slate-500 font-mono">{k.formula}</code>
-                  </div>
-                ))}
-              </div>
-            </section>
-          </div>
-
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <section className="bg-slate-950 border border-orange-900 rounded-xl p-5">
-              <div className="flex items-center gap-2 mb-3"><Database size={14} className="text-orange-400" /><h2 className="font-bold text-orange-400">SQL Patterns They Live In</h2></div>
-              <ul className="space-y-2">
-                {role.sqlPatterns.map((p, i) => (
-                  <li key={i} className="flex items-start gap-2 text-xs">
-                    <ChevronRight size={12} className="text-orange-400 mt-0.5 flex-shrink-0" />
-                    <code className="font-mono text-orange-100 leading-relaxed">{p}</code>
-                  </li>
-                ))}
-              </ul>
-            </section>
-            <section className="bg-emerald-950 border border-emerald-800 rounded-xl p-5">
-              <div className="flex items-center gap-2 mb-3"><Bot size={14} className="text-emerald-400" /><h2 className="font-bold text-emerald-400">Python / pandas Patterns</h2></div>
-              <ul className="space-y-2">
-                {role.pythonPatterns.map((p, i) => (
-                  <li key={i} className="flex items-start gap-2 text-xs">
-                    <ChevronRight size={12} className="text-emerald-400 mt-0.5 flex-shrink-0" />
-                    <code className="font-mono text-emerald-100 leading-relaxed">{p}</code>
-                  </li>
-                ))}
-              </ul>
-            </section>
-          </div>
-        </div>
-      </main>
-    </div>
-  );
-};
-
-/* =========================================================
    ROOT
    ========================================================= */
 function App() {
@@ -1704,8 +1536,7 @@ function App() {
           <div className="flex space-x-1">
             {[
               { id:'drill',      label:'Speed Drill', icon:<Code size={14}/> },
-              { id:'flashcards', label:'Flashcards',  icon:<BookOpen size={14}/> },
-              { id:'roles',      label:'Role Guide',  icon:<Briefcase size={14}/> }
+              { id:'flashcards', label:'Flashcards',  icon:<BookOpen size={14}/> }
             ].map(t => (
               <button key={t.id} onClick={() => setMode(t.id)}
                 className={`flex items-center space-x-1.5 px-3 py-1.5 rounded text-xs font-medium ${mode === t.id ? 'bg-slate-800 text-slate-100' : 'text-slate-500 hover:bg-slate-900'}`}>
@@ -1720,9 +1551,8 @@ function App() {
           </div>
         </nav>
         <div className="flex-1 overflow-hidden">
-          {mode === 'drill'      && <DrillMode />}
-          {mode === 'flashcards' && <FlashcardsMode />}
-          {mode === 'roles'      && <RolesMode />}
+          <div className={mode === 'drill'      ? 'h-full' : 'hidden'}><DrillMode /></div>
+          <div className={mode === 'flashcards' ? 'h-full' : 'hidden'}><FlashcardsMode /></div>
         </div>
       </div>
     </ErrorBoundary>
